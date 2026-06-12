@@ -10,7 +10,6 @@ class TransactionCreate(BaseModel):
     merchant: str
     description: str | None = None
     transaction_date: date
-    user_id: int
 
 
 class TransactionResponse(BaseModel):

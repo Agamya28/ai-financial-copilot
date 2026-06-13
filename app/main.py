@@ -5,11 +5,13 @@ from app.database import models
 from app.routers import transactions
 from app.routers import users
 from app.routers import auth
+from app.routers import analytics
 
 app = FastAPI()
 
 app.include_router(auth.router)
 app.include_router(transactions.router)
 app.include_router(users.router)
+app.include_router(analytics.router)
 
 Base.metadata.create_all(bind=engine)

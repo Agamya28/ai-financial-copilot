@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
-
+from app.services.intent_classifier import classify_question
+from app.schemas.intent import Intent
 from app.services.gemini_service import generate_response
 from app.services.analytics import (
     get_summary,
@@ -35,8 +36,9 @@ def analyze_question(
         "november": "11",
         "december": "12",
     }
+    intent_result = classify_question(question)
 
-    if "total" in question:
+    if intent_result.intent == Intent.TOTAL_SPENDING:
 
         prompt = f"""
         You are a financial analyst.
@@ -55,7 +57,7 @@ def analyze_question(
 
         return generate_response(prompt)
 
-    if "largest expense" in question:
+    if intent_result.intent == Intent.LARGEST_EXPENSE:
 
         prompt = f"""
         You are a financial analyst.
@@ -74,7 +76,7 @@ def analyze_question(
 
         return generate_response(prompt)
 
-    if "average transaction" in question:
+    if intent_result.intent == Intent.AVERAGE_TRANSACTION:
 
         prompt = f"""
         You are a financial analyst.
@@ -93,7 +95,7 @@ def analyze_question(
 
         return generate_response(prompt)
 
-    if "how many" in question and "transaction" in question:
+    if intent_result.intent == Intent.TRANSACTION_COUNT:
 
         prompt = f"""
         You are a financial analyst.
@@ -112,16 +114,16 @@ def analyze_question(
 
         return generate_response(prompt)
 
-    if "spend on" in question or "spent on" in question:
+    if intent_result.intent == Intent.CATEGORY_SPENDING:
 
         breakdown = get_category_breakdown(
             db=db,
             user_id=user_id
         )
-
+        category = intent_result.parameters.get("category")
         for item in breakdown:
 
-            if item.category.lower() in question:
+            if item.category.lower() == category:
 
                 prompt = f"""
                 You are a financial analyst.
@@ -143,50 +145,44 @@ def analyze_question(
 
         return "I couldn't find that category."
 
-    if "spend in" in question or "spent in" in question:
+    if intent_result.intent == Intent.MONTHLY_SPENDING:
 
         breakdown = get_monthly_breakdown(
             db=db,
             user_id=user_id
         )
 
-        for month_name, month_number in month_mapping.items():
+        month_name = intent_result.parameters.get("month")
+        month_number = month_mapping[month_name]
 
-            if month_name in question:
+        for item in breakdown:
 
-                for item in breakdown:
+            if item.month.endswith(month_number):
 
-                    if item.month.endswith(month_number):
+                prompt = f"""
+                You are a financial analyst.
 
-                        prompt = f"""
-                        You are a financial analyst.
+                Use only the provided financial data.
+                Do not invent numbers.
 
-                        Use only the provided financial data.
-                        Do not invent numbers.
+                User question:
+                {question}
 
-                        User question:
-                        {question}
+                Financial data:
+                Month: {month_name.title()}
+                Total spending: {item.total_spending}
 
-                        Financial data:
-                        Month: {month_name.title()}
-                        Total spending: {item.total_spending}
+                Give a short, professional answer.
+                """
 
-                        Give a short, professional answer.
-                        """
-
-                        return generate_response(prompt)
-
-                return (
-                    f"No spending data found for "
-                    f"{month_name.title()}."
-                )
+                return generate_response(prompt)
 
         return (
-            "Please specify a month. "
-            "For example: 'How much did I spend in January?'"
+            f"No spending data found for "
+            f"{month_name.title()}."
         )
 
-    if "summary" in question:
+    if intent_result.intent == Intent.SPENDING_SUMMARY:
 
         prompt = f"""
         You are a financial analyst.

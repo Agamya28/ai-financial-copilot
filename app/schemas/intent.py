@@ -12,6 +12,10 @@ class Intent(str, Enum):
     CATEGORY_SPENDING = "category_spending"
     MONTHLY_SPENDING = "monthly_spending"
     SPENDING_SUMMARY = "spending_summary"
+    TOP_CATEGORY = "top_category"
+    HIGHEST_SPENDING_MONTH = "highest_spending_month"
+    LOWEST_SPENDING_MONTH = "lowest_spending_month"
+    CATEGORY_PERCENTAGES = "category_percentages"
     UNKNOWN = "unknown"
 
 

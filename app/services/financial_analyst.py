@@ -5,7 +5,11 @@ from app.services.gemini_service import generate_response
 from app.services.analytics import (
     get_summary,
     get_category_breakdown,
-    get_monthly_breakdown
+    get_monthly_breakdown,
+    get_top_category,
+    get_lowest_spending_month,
+    get_highest_spending_month,
+    get_category_percentages
 )
 
 
@@ -52,7 +56,7 @@ def analyze_question(
         Financial data:
         Total spending: {summary.total_spending}
 
-        Give a short, professional answer.
+        Provide a specific, data-grounded financial insight.
         """
 
         return generate_response(prompt)
@@ -71,7 +75,7 @@ def analyze_question(
         Financial data:
         Largest expense: {summary.largest_expense}
 
-        Give a short, professional answer.
+        Provide a specific, data-grounded financial insight.
         """
 
         return generate_response(prompt)
@@ -90,7 +94,7 @@ def analyze_question(
         Financial data:
         Average transaction: {summary.average_transaction}
 
-        Give a short, professional answer.
+        Provide a specific, data-grounded financial insight.
         """
 
         return generate_response(prompt)
@@ -109,7 +113,7 @@ def analyze_question(
         Financial data:
         Transaction count: {summary.transaction_count}
 
-        Give a short, professional answer.
+        Provide a specific, data-grounded financial insight.
         """
 
         return generate_response(prompt)
@@ -138,7 +142,7 @@ def analyze_question(
                 Category: {item.category}
                 Total spending: {item.total_spending}
 
-                Give a short, professional answer.
+                Provide a specific, data-grounded financial insight.
                 """
 
                 return generate_response(prompt)
@@ -172,7 +176,7 @@ def analyze_question(
                 Month: {month_name.title()}
                 Total spending: {item.total_spending}
 
-                Give a short, professional answer.
+                Provide a specific, data-grounded financial insight.
                 """
 
                 return generate_response(prompt)
@@ -181,6 +185,125 @@ def analyze_question(
             f"No spending data found for "
             f"{month_name.title()}."
         )
+
+    if intent_result.intent == Intent.TOP_CATEGORY:
+
+        top_category = get_top_category(
+            db=db,
+            user_id=user_id
+        )
+
+        if not top_category:
+            return "No spending data available."
+
+        prompt = f"""
+        You are a financial analyst.
+
+        Use only the provided financial data.
+        Do not invent numbers.
+
+        User question:
+        {question}
+
+        Financial data:
+        Top category: {top_category.category}
+        Total spending: {top_category.total_spending}
+
+        Provide a specific, data-grounded financial insight.
+        """
+
+        return generate_response(prompt)
+
+    if intent_result.intent == Intent.HIGHEST_SPENDING_MONTH:
+
+        month = get_highest_spending_month(
+            db=db,
+            user_id=user_id
+        )
+
+        if not month:
+            return "No spending data available."
+
+        prompt = f"""
+        You are a financial analyst.
+
+        Use only the provided financial data.
+        Do not invent numbers.
+
+        User question:
+        {question}
+
+        Financial data:
+        Month: {month.month}
+        Total spending: {month.total_spending}
+
+        Provide a specific, data-grounded financial insight.
+        """
+
+        return generate_response(prompt)
+
+    if intent_result.intent == Intent.LOWEST_SPENDING_MONTH:
+
+        month = get_lowest_spending_month(
+            db=db,
+            user_id=user_id
+        )
+
+        if not month:
+            return "No spending data available."
+
+        prompt = f"""
+        You are a financial analyst.
+
+        Use only the provided financial data.
+        Do not invent numbers.
+
+        User question:
+        {question}
+
+        Financial data:
+        Month: {month.month}
+        Total spending: {month.total_spending}
+
+        Provide a specific, data-grounded financial insight.
+        """
+
+        return generate_response(prompt)
+
+    if intent_result.intent == Intent.CATEGORY_PERCENTAGES:
+
+        percentages = get_category_percentages(
+            db=db,
+            user_id=user_id
+        )
+
+        if not percentages:
+            return "No spending data available."
+
+        breakdown_text = "\n".join(
+            [
+                f"{item.category}: {item.percentage}%"
+                for item in percentages
+            ]
+        )
+
+        prompt = f"""
+        You are a financial analyst.
+
+        Use only the provided financial data.
+        Do not invent numbers.
+
+        User question:
+        {question}
+
+        Financial data:
+        {breakdown_text}
+
+        Explain the category distribution.
+        """
+
+        return generate_response(prompt)
+
 
     if intent_result.intent == Intent.SPENDING_SUMMARY:
 

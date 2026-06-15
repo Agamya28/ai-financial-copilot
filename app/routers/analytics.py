@@ -3,8 +3,8 @@ from sqlalchemy.orm import Session
 
 from app.database.database import get_db
 from app.dependencies.auth import get_current_user
-from app.schemas.analytics import AnalyticsSummary, CategorySpending, MonthlySpending
-from app.services.analytics import get_summary, get_category_breakdown, get_monthly_breakdown
+from app.schemas.analytics import AnalyticsSummary, CategorySpending, MonthlySpending, AdvancedAnalytics
+from app.services.analytics import get_summary, get_category_breakdown, get_monthly_breakdown, get_advanced_analytics
 
 router = APIRouter(
     prefix="/analytics",
@@ -40,6 +40,19 @@ def get_monthly_spending_route(
     current_user = Depends(get_current_user)
 ):
     return get_monthly_breakdown(
+        db=db,
+        user_id=current_user.id
+    )
+
+@router.get(
+    "/advanced",
+    response_model=AdvancedAnalytics
+)
+def get_advanced_analytics_route(
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    return get_advanced_analytics(
         db=db,
         user_id=current_user.id
     )

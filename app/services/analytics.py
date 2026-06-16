@@ -1,9 +1,12 @@
+import calendar
+from datetime import date
+
 from decimal import Decimal
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import Optional
 
-from app.database.models import Transaction
+from app.database.models import Transaction, Budget
 from app.schemas.analytics import AnalyticsSummary, CategorySpending, MonthlySpending, TopCategory, CategoryPercentage, MonthlyInsight, AdvancedAnalytics
 
 def get_summary(
@@ -211,3 +214,116 @@ def get_advanced_analytics(
         lowest_spending_month=lowest_spending_month,
         category_percentages=category_percentages
     )
+
+def get_spending_forecast(
+    db: Session,
+    user_id: int
+):
+    today = date.today()
+
+    days_elapsed = today.day
+
+    days_in_month = calendar.monthrange(
+        today.year,
+        today.month
+    )[1]
+
+    current_spending = (
+        db.query(
+            func.sum(Transaction.amount)
+        )
+        .filter(
+            Transaction.user_id == user_id,
+            func.extract(
+                "month",
+                Transaction.transaction_date
+            ) == today.month,
+            func.extract(
+                "year",
+                Transaction.transaction_date
+            ) == today.year
+        )
+        .scalar()
+        or 0
+    )
+
+    forecast = (
+        current_spending /
+        days_elapsed
+    ) * days_in_month
+
+    return {
+        "current_spending": current_spending,
+        "forecast": round(forecast, 2)
+    }
+
+
+def get_budget_recommendations(
+    db: Session,
+    user_id: int
+):
+    today = date.today()
+
+    days_elapsed = today.day
+
+    days_in_month = calendar.monthrange(
+        today.year,
+        today.month
+    )[1]
+
+    budgets = (
+        db.query(Budget)
+        .filter(Budget.user_id == user_id)
+        .all()
+    )
+
+    recommendations = []
+
+    for budget in budgets:
+
+        spent = (
+            db.query(
+                func.sum(Transaction.amount)
+            )
+            .filter(
+                Transaction.user_id == user_id,
+                Transaction.category == budget.category
+            )
+            .scalar()
+            or 0
+        )
+
+        forecast = (
+            spent / days_elapsed
+        ) * days_in_month
+
+        if forecast > budget.monthly_limit:
+
+            over_amount = (
+                forecast -
+                budget.monthly_limit
+            )
+
+            message = (
+                f"Projected to exceed budget by ₹{over_amount:.2f}"
+            )
+
+        else:
+
+            remaining_percent = (
+                (budget.monthly_limit - forecast)
+                / budget.monthly_limit
+            ) * 100
+
+            message = (
+                f"On track. {remaining_percent:.0f}% budget remaining."
+            )
+
+        recommendations.append(
+            {
+                "category": budget.category,
+                "message": message
+            }
+        )
+
+    return recommendations

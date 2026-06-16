@@ -19,3 +19,10 @@ class Transaction(Base):
     transaction_date=Column(Date, nullable=False)
     user_id=Column(Integer, ForeignKey("users.id"), nullable=False)
     created_at=Column(DateTime, default=datetime.utcnow, nullable=False)
+
+class Budget(Base):
+    __tablename__ = "budgets"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    category = Column(String, nullable=False)
+    monthly_limit = Column(Numeric(10, 2), nullable=False)

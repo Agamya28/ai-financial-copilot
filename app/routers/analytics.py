@@ -4,8 +4,8 @@ from sqlalchemy.orm import Session
 from app.database.models import User
 from app.database.database import get_db
 from app.dependencies.auth import get_current_user
-from app.schemas.analytics import AnalyticsSummary, CategorySpending, MonthlySpending, AdvancedAnalytics
-from app.services.analytics import get_summary, get_category_breakdown, get_monthly_breakdown, get_advanced_analytics
+from app.schemas.analytics import AnalyticsSummary, CategorySpending, MonthlySpending, AdvancedAnalytics, SpendingForecast, BudgetRecommendation
+from app.services.analytics import get_summary, get_category_breakdown, get_monthly_breakdown, get_advanced_analytics, get_spending_forecast, get_budget_recommendations
 from app.services.insights import generate_insights
 
 router = APIRouter(
@@ -65,6 +65,32 @@ def get_insights(
     db: Session = Depends(get_db)
 ):
     return generate_insights(
+        db=db,
+        user_id=current_user.id
+    )
+
+@router.get(
+    "/forecast",
+    response_model=SpendingForecast
+)
+def get_forecast_route(
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    return get_spending_forecast(
+        db=db,
+        user_id=current_user.id
+    )
+
+@router.get(
+    "/budget-recommendations",
+    response_model=list[BudgetRecommendation]
+)
+def get_budget_recommendations_route(
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    return get_budget_recommendations(
         db=db,
         user_id=current_user.id
     )

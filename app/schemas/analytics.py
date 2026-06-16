@@ -34,3 +34,11 @@ class AdvancedAnalytics(BaseModel):
     highest_spending_month: Optional[MonthlyInsight]
     lowest_spending_month: Optional[MonthlyInsight]
     category_percentages: list[CategoryPercentage]
+
+class SpendingForecast(BaseModel):
+    current_spending: Decimal
+    forecast: Decimal
+
+class BudgetRecommendation(BaseModel):
+    category: str
+    message: str

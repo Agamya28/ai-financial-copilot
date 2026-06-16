@@ -37,10 +37,10 @@ def get_category_breakdown(
 ) -> list[CategorySpending]:
     result = (
         db.query(
-            Transaction.category,
+            func.lower(Transaction.category),
             func.sum(Transaction.amount)
         )
-        .filter(Transaction.user_id == user_id).group_by(Transaction.category)
+        .filter(Transaction.user_id == user_id).group_by(func.lower(Transaction.category))
         .all()
     )
     breakdown = []
@@ -87,11 +87,11 @@ def get_top_category(
 ) -> Optional[TopCategory]:
     result = (
     db.query(
-        Transaction.category,
+        func.lower(Transaction.category).label("category"),
         func.sum(Transaction.amount).label("total_spending")
     )
     .filter(Transaction.user_id == user_id)
-    .group_by(Transaction.category)
+    .group_by(func.lower(Transaction.category))
     .order_by(func.sum(Transaction.amount).desc())
     .first()
 )   

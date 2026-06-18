@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from app.services.intent_classifier import classify_question
 from app.schemas.intent import Intent
 from app.services.gemini_service import generate_response
+from app.services.budget import get_budget_status
 from app.services.analytics import (
     get_summary,
     get_category_breakdown,
@@ -18,7 +19,15 @@ def analyze_question(
     db: Session,
     user_id: int
 ) -> str:
+    BASE_PROMPT = """
+        You are a financial analyst.
 
+        Use only the provided financial data.
+        Do not invent numbers.
+        Do not use markdown formatting.
+        Respond in plain text.
+        Use Indian Rupees (₹) when referring to money.
+        """
     question = question.lower()
 
     summary = get_summary(
@@ -45,10 +54,7 @@ def analyze_question(
     if intent_result.intent == Intent.TOTAL_SPENDING:
 
         prompt = f"""
-        You are a financial analyst.
-
-        Use only the provided financial data.
-        Do not invent numbers.
+        {BASE_PROMPT}
 
         User question:
         {question}
@@ -64,16 +70,13 @@ def analyze_question(
     if intent_result.intent == Intent.LARGEST_EXPENSE:
 
         prompt = f"""
-        You are a financial analyst.
-
-        Use only the provided financial data.
-        Do not invent numbers.
+        {BASE_PROMPT}
 
         User question:
         {question}
 
         Financial data:
-        Largest expense: {summary.largest_expense}
+        Largest Expense: {summary.largest_expense}
 
         Provide a specific, data-grounded financial insight.
         """
@@ -83,16 +86,13 @@ def analyze_question(
     if intent_result.intent == Intent.AVERAGE_TRANSACTION:
 
         prompt = f"""
-        You are a financial analyst.
-
-        Use only the provided financial data.
-        Do not invent numbers.
+        {BASE_PROMPT}
 
         User question:
         {question}
 
         Financial data:
-        Average transaction: {summary.average_transaction}
+        Average Transaction: {summary.average_transaction:.2f}
 
         Provide a specific, data-grounded financial insight.
         """
@@ -102,16 +102,13 @@ def analyze_question(
     if intent_result.intent == Intent.TRANSACTION_COUNT:
 
         prompt = f"""
-        You are a financial analyst.
-
-        Use only the provided financial data.
-        Do not invent numbers.
+        {BASE_PROMPT}
 
         User question:
         {question}
 
         Financial data:
-        Transaction count: {summary.transaction_count}
+        Number of Transactions: {summary.transaction_count}
 
         Provide a specific, data-grounded financial insight.
         """
@@ -129,11 +126,9 @@ def analyze_question(
 
             if item.category.lower() == category:
 
-                prompt = f"""
-                You are a financial analyst.
 
-                Use only the provided financial data.
-                Do not invent numbers.
+                prompt = f"""
+                {BASE_PROMPT}
 
                 User question:
                 {question}
@@ -144,7 +139,7 @@ def analyze_question(
 
                 Provide a specific, data-grounded financial insight.
                 """
-
+                
                 return generate_response(prompt)
 
         return "I couldn't find that category."
@@ -164,10 +159,7 @@ def analyze_question(
             if item.month.endswith(month_number):
 
                 prompt = f"""
-                You are a financial analyst.
-
-                Use only the provided financial data.
-                Do not invent numbers.
+                {BASE_PROMPT}
 
                 User question:
                 {question}
@@ -197,10 +189,7 @@ def analyze_question(
             return "No spending data available."
 
         prompt = f"""
-        You are a financial analyst.
-
-        Use only the provided financial data.
-        Do not invent numbers.
+        {BASE_PROMPT}
 
         User question:
         {question}
@@ -225,10 +214,7 @@ def analyze_question(
             return "No spending data available."
 
         prompt = f"""
-        You are a financial analyst.
-
-        Use only the provided financial data.
-        Do not invent numbers.
+        {BASE_PROMPT}
 
         User question:
         {question}
@@ -253,10 +239,7 @@ def analyze_question(
             return "No spending data available."
 
         prompt = f"""
-        You are a financial analyst.
-
-        Use only the provided financial data.
-        Do not invent numbers.
+        {BASE_PROMPT}
 
         User question:
         {question}
@@ -288,10 +271,7 @@ def analyze_question(
         )
 
         prompt = f"""
-        You are a financial analyst.
-
-        Use only the provided financial data.
-        Do not invent numbers.
+        {BASE_PROMPT}
 
         User question:
         {question}
@@ -299,7 +279,7 @@ def analyze_question(
         Financial data:
         {breakdown_text}
 
-        Explain the category distribution.
+        Provide a specific, data-grounded financial insight.
         """
 
         return generate_response(prompt)
@@ -308,10 +288,7 @@ def analyze_question(
     if intent_result.intent == Intent.SPENDING_SUMMARY:
 
         prompt = f"""
-        You are a financial analyst.
-
-        Use only the provided financial data.
-        Do not invent numbers.
+        {BASE_PROMPT}
 
         User question:
         {question}
@@ -322,7 +299,51 @@ def analyze_question(
         Average transaction: {summary.average_transaction}
         Largest expense: {summary.largest_expense}
 
-        Give a concise spending summary with key insights.
+        Provide a specific, data-grounded financial insight.
+        """
+
+        return generate_response(prompt)
+    
+    if intent_result.intent == Intent.BUDGET_ANALYSIS:
+
+        budgets = get_budget_status(
+            db=db,
+            user_id=user_id
+        )
+
+        if not budgets:
+            return (
+                "You haven't created any budgets yet."
+            )
+
+        budget_text = "\n\n".join(
+                    [
+                        f"""
+            Category: {item.category}
+            Budget: ₹{item.monthly_limit}
+            Spent: ₹{item.spent}
+            Remaining: ₹{item.remaining}
+            Usage: {item.percentage_used}%
+            Status: {
+                "OVER_BUDGET"
+                if item.spent > item.monthly_limit
+                else "WITHIN_BUDGET"
+            }
+            """
+                        for item in budgets
+                    ]
+                )
+
+        prompt = f"""
+        {BASE_PROMPT}
+
+        User question:
+        {question}
+
+        Budget Analysis Data:
+        {budget_text}
+
+        Provide a specific, data-grounded financial insight.
         """
 
         return generate_response(prompt)

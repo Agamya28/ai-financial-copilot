@@ -46,7 +46,6 @@ def classify_question(question: str) -> IntentResult:
     "month did i spend the most",
     "spent the most",
     "best spending month",
-    "highest spending",
     "month had the highest spending",
     "which month had the highest spending",
     ]
@@ -55,7 +54,6 @@ def classify_question(question: str) -> IntentResult:
     "lowest spending month",
     "month did i spend the least",
     "spent the least",
-    "lowest spending",
     "month had the lowest spending",
     "which month had the lowest spending",
     ]
@@ -67,6 +65,21 @@ def classify_question(question: str) -> IntentResult:
     "category distribution",
     "spending distribution",
     "spending breakdown",
+    ]
+
+    budget_keywords=[
+        "budget",
+        "budgets",
+        "over budget",
+        "overspend",
+        "overspending",
+        "budget left",
+        "budget remaining",
+        "remaining budget",
+        "budget exceeded",
+        "exceeded budget",
+        "budget limit",
+        "within budget",
     ]
 
     month_mapping = {
@@ -131,6 +144,12 @@ def classify_question(question: str) -> IntentResult:
         return IntentResult(
             intent=Intent.LOWEST_SPENDING_MONTH
         )
+    
+    if any(keyword in question for keyword in budget_keywords):
+        return IntentResult(
+            intent=Intent.BUDGET_ANALYSIS
+        )
+
 
     if any(keyword in question for keyword in category_percentage_keywords):
         return IntentResult(

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
+import AIChat from "../components/AIChat";
 
 import {
   ResponsiveContainer,
@@ -453,11 +454,7 @@ function Dashboard() {
         </div>
         )}
 
-        {advancedData && (
-  <div className="mt-8 bg-white p-6 rounded-xl shadow">
-    ...
-  </div>
-)}
+        
 
 {/* Recent Transactions */}
 <div className="bg-white p-6 rounded-xl shadow mt-8">
@@ -511,7 +508,7 @@ function Dashboard() {
   </div>
 
 </div>
-
+<AIChat />
 </div>
 );
 

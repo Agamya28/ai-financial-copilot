@@ -69,12 +69,13 @@ def get_budget_status(
         ) or 0
 
         remaining = budget.monthly_limit - spent
-
-        percentage_used = (
-            float(spent)
-            / float(budget.monthly_limit)
-        ) * 100
-
+        if budget.monthly_limit>0:
+            percentage_used = (
+                float(spent)
+                / float(budget.monthly_limit)
+            ) * 100
+        else:
+            percentage_used=0
         results.append(
             BudgetStatus(
                 category=budget.category,

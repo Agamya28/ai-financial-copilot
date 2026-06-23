@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import api from "../services/api";
 import AIChat from "../components/AIChat";
 
+import TransactionTable from "../components/TransactionTable";
+
 import {
   ResponsiveContainer,
   LineChart,
@@ -454,60 +456,11 @@ function Dashboard() {
         </div>
         )}
 
-        
+<TransactionTable
+  transactions={transactions.slice(0, 5)}
+  title="Recent Transactions"
+/>
 
-{/* Recent Transactions */}
-<div className="bg-white p-6 rounded-xl shadow mt-8">
-
-  <h2 className="text-2xl font-semibold mb-4">
-    Recent Transactions
-  </h2>
-
-  <div className="overflow-x-auto">
-
-    <table className="w-full">
-
-      <thead>
-        <tr className="border-b">
-          <th className="text-left p-3">Date</th>
-          <th className="text-left p-3">Category</th>
-          <th className="text-left p-3">Merchant</th>
-          <th className="text-left p-3">Amount</th>
-        </tr>
-      </thead>
-
-      <tbody>
-
-        {transactions.map((tx) => (
-          <tr
-            key={tx.id}
-            className="border-b hover:bg-gray-50"
-          >
-            <td className="p-3">
-              {tx.transaction_date}
-            </td>
-
-            <td className="p-3 capitalize">
-              {tx.category}
-            </td>
-
-            <td className="p-3">
-              {tx.merchant}
-            </td>
-
-            <td className="p-3 font-semibold">
-              ₹{Number(tx.amount).toFixed(2)}
-            </td>
-          </tr>
-        ))}
-
-      </tbody>
-
-    </table>
-
-  </div>
-
-</div>
 <AIChat />
 </div>
 );

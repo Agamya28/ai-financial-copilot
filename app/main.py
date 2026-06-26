@@ -31,3 +31,10 @@ app.include_router(csv_upload.router)
 app.include_router(budget.router)
 
 Base.metadata.create_all(bind=engine)
+
+@app.get("/")
+def root():
+    return {"message": "Backend is running successfully 🚀"}
+@app.get("/health")
+def health():
+    return {"status": "ok"}

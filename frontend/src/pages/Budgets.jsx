@@ -6,6 +6,22 @@ import BudgetTable from "../components/BudgetTable";
 function Budgets() {
   const [budgets, setBudgets] = useState([]);
 
+const handleDeleteBudget = async (category) => {
+
+    const confirmed = window.confirm(
+        `Are you sure you want to delete the ${category} budget?`
+    );
+
+    if (!confirmed) return;
+
+    try {
+        await api.delete(`/budget/${category}`);
+        loadBudgets();
+    } catch (error) {
+        console.error(error);
+    }
+};
+
   const loadBudgets = async () => {
         try {
             const response =
@@ -24,7 +40,7 @@ function Budgets() {
     return (
     <div className="p-8">
         <BudgetForm onBudgetAdded={loadBudgets} />
-        <BudgetTable budgets={budgets} />
+        <BudgetTable budgets={budgets} onDelete={handleDeleteBudget}/>
     </div>
     );
   

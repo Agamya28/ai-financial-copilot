@@ -1,4 +1,4 @@
-function BudgetTable({ budgets }) {
+function BudgetTable({ budgets, onDelete }) {
     return (
         <div className="bg-white p-6 rounded-xl shadow mt-8">
 
@@ -35,6 +35,10 @@ function BudgetTable({ budgets }) {
 
                             <th className="text-left p-3">
                                 Status
+                            </th>
+
+                            <th className="text-left p-3">
+                                Actions
                             </th>
 
                         </tr>
@@ -86,7 +90,23 @@ function BudgetTable({ budgets }) {
                                         ? "Over Budget"
                                         : "Within Budget"}
                                 </td>
-
+                                <td className="p-3">
+                                    <button
+                                        onClick={() =>
+                                            onDelete?.(budget.category)
+                                        }
+                                        className="
+                                            bg-red-500
+                                            text-white
+                                            px-3
+                                            py-1
+                                            rounded
+                                            hover:bg-red-600
+                                        "
+                                    >
+                                        Delete
+                                    </button>
+                                </td>
                             </tr>
 
                         ))}

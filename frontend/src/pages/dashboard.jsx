@@ -15,6 +15,7 @@ import {
   PieChart,
   Pie,
   Legend,
+  Cell
 } from "recharts";
 
 function Dashboard() {
@@ -26,7 +27,55 @@ function Dashboard() {
   const [budgetStatus, setBudgetStatus] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [recommendations, setRecommendations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const COLORS = [
+    "#2563eb",
+    "#16a34a",
+    "#dc2626",
+    "#f59e0b",
+    "#9333ea",
+    "#0891b2",
+    "#ec4899",
+];
+  const exportTransactionsCSV = () => {
 
+  const headers = [
+    "Date",
+    "Category",
+    "Merchant",
+    "Amount"
+  ];
+
+  const rows = transactions.map((tx) => [
+    tx.transaction_date,
+    tx.category,
+    tx.merchant,
+    tx.amount
+  ]);
+
+  const csvContent = [
+    headers,
+    ...rows
+  ]
+    .map((row) => row.join(","))
+    .join("\n");
+
+  const blob = new Blob(
+    [csvContent],
+    { type: "text/csv;charset=utf-8;" }
+  );
+
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = "transactions.csv";
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
   const formatMonth = (monthString) => {
   const date = new Date(`${monthString}-01`);
 
@@ -50,7 +99,7 @@ function Dashboard() {
     const loadData = async () => {
         
       try {
-        
+        setLoading(true);
         const summaryResponse = await api.get(
           "/analytics/summary"
         );
@@ -68,13 +117,13 @@ function Dashboard() {
         );
 
         setCategoryData(
-          categoryResponse.data.map((item) => ({
-            ...item,
-            total_spending: Number(
-              item.total_spending
-            ),
-          }))
-        );
+        categoryResponse.data.map((item) => ({
+          ...item,
+          total_spending: Number(
+            item.total_spending
+          ),
+        }))
+      );
         const advancedResponse = await api.get(
         "/analytics/advanced"
         );
@@ -102,10 +151,15 @@ function Dashboard() {
         await api.get(
             "/analytics/budget-recommendations"
         );
+        console.log(
+            recommendationResponse.data
+        );
 
         setRecommendations(
         recommendationResponse.data
         );
+
+        setLoading(false);
 
       } catch (error) {
         console.error(error);
@@ -118,18 +172,46 @@ function Dashboard() {
           error.response?.data
         );
       }
+      finally{
+        setLoading(false);
+      }
     };
 
     loadData();
   }, []);
 
+  if (loading) {
+    return (
+        <div className="min-h-screen flex justify-center items-center">
+            <div className="text-center">
+
+                <div
+                    className="
+                        animate-spin
+                        rounded-full
+                        h-16
+                        w-16
+                        border-b-4
+                        border-blue-600
+                        mx-auto
+                    "
+                />
+
+                <p className="mt-4 text-xl text-gray-600">
+                    Loading Dashboard...
+                </p>
+
+            </div>
+        </div>
+    );
+}
   if (!summary) {
     return (
-      <h2 className="p-8 text-xl">
-        Loading...
-      </h2>
+        <div className="p-8">
+            No data available.
+        </div>
     );
-  }
+}
   
   return (
     <div className="min-h-screen bg-gray-100 p-8">
@@ -331,6 +413,8 @@ function Dashboard() {
               <Line
                 type="monotone"
                 dataKey="total_spending"
+                stroke="#2563eb"
+                strokeWidth={3}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -358,7 +442,14 @@ function Dashboard() {
                 cy="50%"
                 outerRadius={120}
                 label
-              />
+            >
+                {categoryData.map((entry, index) => (
+                    <Cell
+                        key={index}
+                        fill={COLORS[index % COLORS.length]}
+                    />
+                ))}
+            </Pie>
 
               <Tooltip />
 
@@ -458,7 +549,7 @@ function Dashboard() {
 
 <TransactionTable
   transactions={transactions.slice(0, 5)}
-  title="Recent Transactions"
+  title="Recent Transactions" showDelete={false} onExport={exportTransactionsCSV}
 />
 
 <AIChat />

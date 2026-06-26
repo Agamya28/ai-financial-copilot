@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from datetime import date
+from fastapi import HTTPException
 
 from app.database.models import Budget, Transaction
 from app.schemas.budget import BudgetCreate, BudgetStatus
@@ -11,6 +12,26 @@ def create_budget(
     user_id: int,
     budget: BudgetCreate
 ):
+
+    existing_budget = (
+        db.query(Budget)
+        .filter(
+            Budget.user_id == user_id,
+            func.lower(Budget.category)
+            == budget.category.lower()
+        )
+        .first()
+    )
+
+    if existing_budget:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "A budget already exists "
+                "for this category."
+            )
+        )
+
     new_budget = Budget(
         user_id=user_id,
         category=budget.category.lower(),

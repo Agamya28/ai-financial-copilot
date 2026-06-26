@@ -3,6 +3,7 @@ from app.services.intent_classifier import classify_question
 from app.schemas.intent import Intent
 from app.services.gemini_service import generate_response
 from app.services.budget import get_budget_status
+from app.services.financial_context import build_financial_context
 from app.services.analytics import (
     get_summary,
     get_category_breakdown,
@@ -348,4 +349,44 @@ def analyze_question(
 
         return generate_response(prompt)
 
-    return "I don't understand that question yet."
+
+    context = build_financial_context(
+        db=db,
+        user_id=user_id
+    )
+
+    prompt = f"""
+    {BASE_PROMPT}
+
+    You are an expert personal finance advisor.
+
+    Analyze the user's complete financial profile and answer their question.
+
+    Financial Summary:
+    {context['summary']}
+
+    Category Breakdown:
+    {context['category_breakdown']}
+
+    Monthly Spending:
+    {context['monthly_spending']}
+
+    Budget Status:
+    {context['budget_status']}
+
+    Insights:
+    {context['insights']}
+
+    User Question:
+    {question}
+
+    Instructions:
+    - Use ONLY the provided financial data.
+    - Mention specific numbers whenever possible.
+    - Give personalized recommendations.
+    - Suggest concrete actions the user can take.
+    - Keep the response concise (under 250 words).
+    - Use Indian Rupees (₹).
+    """
+
+    return generate_response(prompt)

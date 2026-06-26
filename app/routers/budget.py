@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-
+from app.database.models import Budget
 from app.database.database import get_db
 from app.dependencies.auth import get_current_user
 from app.schemas.budget import BudgetCreate, BudgetResponse, BudgetStatus
@@ -45,3 +45,31 @@ def get_budget_status_route(
         db=db,
         user_id=current_user.id
     )
+
+@router.delete("/{category}")
+def delete_budget(
+    category: str,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user)
+):
+    budget = (
+        db.query(Budget)
+        .filter(
+            Budget.user_id == current_user.id,
+            Budget.category == category.lower()
+        )
+        .first()
+    )
+
+    if not budget:
+        raise HTTPException(
+            status_code=404,
+            detail="Budget not found"
+        )
+
+    db.delete(budget)
+    db.commit()
+
+    return {
+        "message": "Budget deleted successfully"
+    }

@@ -38,7 +38,10 @@ function BudgetForm({ onBudgetAdded }) {
             onBudgetAdded();
 
         } catch (error) {
-            console.error(error);
+            alert(
+            error.response?.data?.detail ||
+            "Failed to create budget."
+        );
         }
     };
 

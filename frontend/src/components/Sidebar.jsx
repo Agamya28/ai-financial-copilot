@@ -26,14 +26,6 @@ export default function Sidebar() {
           Reports
         </NavLink>
 
-        <NavLink to="/profile" className={linkClass}>
-          Profile
-        </NavLink>
-
-        <NavLink to="/settings" className={linkClass}>
-          Settings
-        </NavLink>
-
       </nav>
     </aside>
   );

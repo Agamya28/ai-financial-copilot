@@ -281,6 +281,10 @@ def get_budget_recommendations(
 
     for budget in budgets:
 
+        budget_limit = float(
+            budget.monthly_limit
+        )
+
         spent = (
             db.query(
                 func.sum(Transaction.amount)
@@ -293,15 +297,16 @@ def get_budget_recommendations(
             or 0
         )
 
+        spent = float(spent)
+
         forecast = (
             spent / days_elapsed
         ) * days_in_month
 
-        if forecast > budget.monthly_limit:
+        if forecast > budget_limit:
 
             over_amount = (
-                forecast -
-                budget.monthly_limit
+                forecast - budget_limit
             )
 
             message = (
@@ -311,8 +316,8 @@ def get_budget_recommendations(
         else:
 
             remaining_percent = (
-                (budget.monthly_limit - forecast)
-                / budget.monthly_limit
+                (budget_limit - forecast)
+                / budget_limit
             ) * 100
 
             message = (

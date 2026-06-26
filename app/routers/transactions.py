@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.dependencies.auth import get_current_user
-from app.services.transactions import get_transactions
+from app.services.transactions import (get_transactions as get_sorted_transactions)
 
 from app.database.database import get_db
 from app.schemas.transaction import (
@@ -32,7 +32,7 @@ def get_transactions_route(
     db: Session = Depends(get_db),
     current_user= Depends(get_current_user)
 ):
-    return get_transactions(db=db, user_id=current_user.id)
+    return get_sorted_transactions(db=db, user_id=current_user.id)
 
 @router.delete("/{transaction_id}")
 def delete_transaction_route(

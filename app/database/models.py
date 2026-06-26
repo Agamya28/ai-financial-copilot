@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, Numeric, Date, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Numeric, Date, DateTime, ForeignKey, Text
+from sqlalchemy.orm import relationship
 from app.database.database import Base
 from datetime import datetime
 
@@ -26,3 +27,51 @@ class Budget(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     category = Column(String, nullable=False)
     monthly_limit = Column(Numeric(10, 2), nullable=False)
+
+class AIConversation(Base):
+    __tablename__ = "ai_conversations"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id")
+    )
+
+    question = Column(Text, nullable=False)
+
+    response = Column(Text, nullable=False)
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow
+    )
+
+    user = relationship("User")
+
+class ChatHistory(Base):
+    __tablename__ = "chat_history"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id")
+    )
+
+    question = Column(
+        Text,
+        nullable=False
+    )
+
+    response = Column(
+        Text,
+        nullable=False
+    )
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow
+    )
+
+    user = relationship("User")

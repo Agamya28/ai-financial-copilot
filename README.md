@@ -5,7 +5,7 @@ AI Financial Copilot is a full-stack personal finance application that helps use
 ## Live Demo
 
 Frontend: https://ai-financial-copilot-phi.vercel.app
-Backend: https://ai-financial-copilot-kw4t.onrender.com
+Backend: https://ai-financial-copilot-kw4t.onrender.com/docs
 
 ## Features
 
